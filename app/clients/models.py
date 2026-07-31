@@ -29,3 +29,4 @@ class Client(Base):
 
     # Relaciones
     rentals = relationship("Rental", back_populates="client", cascade="all, delete-orphan")
+    rentals = relationship("Rental", back_populates="client")

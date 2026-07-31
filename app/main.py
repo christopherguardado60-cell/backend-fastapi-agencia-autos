@@ -1,27 +1,24 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-import os
-from dotenv import load_dotenv
-
 from app.database import engine, Base
+from app.rentals.routes import router as rentals_router
 from app.cars.routes import router as cars_router
 from app.clients.routes import router as clients_router
-from app.rentals.routes import router as rentals_router
+from app import errors
 
-load_dotenv()
-
-# Crear tablas en la base de datos
+# Crear tablas en la base de datos (Opcional si usas Alembic)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title=os.getenv("APP_TITLE", "Agencia de Alquiler de Autos API"),
+    title="API Agencia de Autos",
+    description="Sistema de gestión de alquileres, autos y clientes",
     version="1.0.0",
-    description="API REST para la gestión de una agencia de alquiler de autos",
-    docs_url="/docs" if os.getenv("ENABLE_DOCS", "True") == "True" else None,
-    redoc_url="/redoc" if os.getenv("ENABLE_DOCS", "True") == "True" else None,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
-# Configuración CORS
+# Configuración de CORS (Para permitir conexiones desde el frontend)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,21 +27,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Registro de routers
-app.include_router(cars_router, prefix="/api/v1/cars", tags=["Autos"])
-app.include_router(clients_router, prefix="/api/v1/clients", tags=["Clientes"])
-app.include_router(rentals_router, prefix="/api/v1/rentals", tags=["Alquileres"])
+# MANEJO GLOBAL DE ERRORES (Consistente)
+@app.exception_handler(Exception)
+async def validation_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Error interno del servidor: {str(exc)}"}
+    )
 
-@app.get("/")
+# Registro de Routers
+app.include_router(cars_router)
+app.include_router(clients_router)
+app.include_router(rentals_router)
+
+@app.get("/", tags=["Root"])
 async def root():
-    """Endpoint de verificación de estado de la API"""
-    return {
-        "status": "ok",
-        "message": "API Agencia de Autos funcionando correctamente",
-        "version": "1.0.0"
-    }
-
-@app.get("/health")
-async def health_check():
-    """Endpoint para health check"""
-    return {"status": "healthy"}
+    return {"message": "Bienvenido a la API de la Agencia de Autos"}

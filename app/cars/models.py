@@ -44,3 +44,4 @@ class Car(Base):
 
     # Relaciones
     rentals = relationship("Rental", back_populates="car", cascade="all, delete-orphan")
+    rentals = relationship("Rental", back_populates="car")
