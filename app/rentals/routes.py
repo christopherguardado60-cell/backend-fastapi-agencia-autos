@@ -1,25 +1,36 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import random
+import string
+
 from app.database import get_db
 from app.rentals import models, schemas
 from app.cars import models as car_models
 from app.clients import models as client_models
 
-# ¡Aquí está el TAG para que aparezca en /docs!
 router = APIRouter(prefix="/rentals", tags=["Rentals"])
 
 @router.post("/", response_model=schemas.RentalResponse, status_code=201)
 def create_rental(rental: schemas.RentalCreate, db: Session = Depends(get_db)):
+    # Validación de negocio: El auto debe existir
     car = db.query(car_models.Car).filter(car_models.Car.id == rental.car_id).first()
     if not car:
         raise HTTPException(status_code=404, detail="Auto no encontrado")
     
+    # Validación de negocio: El cliente debe existir
     client = db.query(client_models.Client).filter(client_models.Client.id == rental.client_id).first()
     if not client:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
 
-    db_rental = models.Rental(**rental.dict())
+    # Generar un código de alquiler único automáticamente (Regla de negocio propia)
+    generated_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    
+    # Agregar el código generado al diccionario de datos
+    rental_data = rental.dict()
+    rental_data['rental_code'] = generated_code
+
+    db_rental = models.Rental(**rental_data)
     db.add(db_rental)
     db.commit()
     db.refresh(db_rental)

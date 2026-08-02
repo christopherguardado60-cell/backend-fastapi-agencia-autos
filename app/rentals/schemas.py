@@ -10,8 +10,8 @@ class RentalBase(BaseModel):
     end_date: date
     total_price: float = Field(..., gt=0, description="El precio debe ser mayor a 0")
     insurance_included: bool = True
+    rental_code: Optional[str] = None
 
-    # REGLA DE NEGOCIO: Validar que la fecha de inicio no sea posterior a la de fin
     @validator('end_date')
     def end_date_after_start_date(cls, v, values):
         if 'start_date' in values and v < values['start_date']:
@@ -31,6 +31,7 @@ class RentalResponse(RentalBase):
     status: RentalStatus
     payment_status: PaymentStatus
     created_at: datetime
+    rental_code: str
 
     class Config:
         orm_mode = True

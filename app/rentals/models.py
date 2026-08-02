@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Date, Enum, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, Date, Enum, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -22,6 +22,7 @@ class Rental(Base):
     __tablename__ = "rentals"
 
     id = Column(Integer, primary_key=True, index=True)
+    rental_code = Column(String, unique=True, index=True, nullable=False)
     car_id = Column(Integer, ForeignKey("cars.id"), nullable=False)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
     
@@ -36,6 +37,6 @@ class Rental(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relaciones (Para poder acceder a los datos del auto y cliente desde un alquiler)
+    # Relaciones
     car = relationship("Car", back_populates="rentals")
     client = relationship("Client", back_populates="rentals")
